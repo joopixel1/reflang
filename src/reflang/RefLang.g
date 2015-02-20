@@ -1,4 +1,4 @@
-grammar RecLang;
+grammar RefLang;
  
  // Grammar of this Programming Language
  //  - grammar rules start with lowercase
