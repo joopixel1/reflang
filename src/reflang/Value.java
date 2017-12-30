@@ -6,14 +6,14 @@ import reflang.AST.Exp;
 
 public interface Value {
 	public String tostring();
-    static class RefVal implements Value { //New in the reflang
-    	private int _loc = -1; 
-        public RefVal(int loc) { _loc = loc; }
-        public String tostring() {
-            return "loc:" + this._loc;
-        }
-        public int loc() { return _loc; }
-    }
+	static class RefVal implements Value { //New in the reflang
+		private int _loc = -1; 
+		public RefVal(int loc) { _loc = loc; }
+		public String tostring() {
+			return "loc:" + this._loc;
+		}
+		public int loc() { return _loc; }
+	}
 	static class FunVal implements Value { //New in the funclang
 		private Env _env;
 		private List<String> _formals;
@@ -67,13 +67,13 @@ public interface Value {
 	    	if(isList()) return listToString();
 	    	return "(" + _fst.tostring() + " " + _snd.tostring() + ")"; 
 	    }
-	    private boolean isList() {
+	    boolean isList() {
 	    	if(_snd instanceof Value.Null) return true;
 	    	if(_snd instanceof Value.PairVal &&
 	    		((Value.PairVal) _snd).isList()) return true;
 	    	return false;
 	    }
-	    private java.lang.String listToString() {
+	    java.lang.String listToString() {
 	    	String result = "(";
 	    	result += _fst.tostring();
 	    	Value next = _snd; 
@@ -94,7 +94,6 @@ public interface Value {
 	}
 	static class DynamicError implements Value { 
 		private String message = "Unknown dynamic error.";
-		public DynamicError() { }
 		public DynamicError(String message) { this.message = message; }
 	    public String tostring() { return "" + message; }
 	}
