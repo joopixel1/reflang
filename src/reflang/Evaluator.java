@@ -6,6 +6,7 @@ import static reflang.Heap.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.IOException;
 
 import reflang.Env.*;
 
@@ -14,18 +15,16 @@ public class Evaluator implements Visitor<Value> {
 	Printer.Formatter ts = new Printer.Formatter();
 
 	Env initEnv = initialEnv(); //New for definelang
+	Heap heap = new Heap16Bit(); //New for reflang
 	
-    Heap heap = null; //New for reflang
-
-    Value valueOf(Program p) {
-    	heap = new Heap16Bit();
+	Value valueOf(Program p) {
 		return (Value) p.accept(this, initEnv);
 	}
 	
 	@Override
 	public Value visit(AddExp e, Env env) {
 		List<Exp> operands = e.all();
-		int result = 0;
+		double result = 0;
 		for(Exp exp: operands) {
 			NumVal intermediate = (NumVal) exp.accept(this, env); // Dynamic type-checking
 			result += intermediate.v(); //Semantics of AddExp in terms of the target language.
@@ -34,22 +33,22 @@ public class Evaluator implements Visitor<Value> {
 	}
 	
 	@Override
-	public Value visit(Unit e, Env env) {
+	public Value visit(UnitExp e, Env env) {
 		return new UnitVal();
 	}
 
 	@Override
-	public Value visit(Const e, Env env) {
+	public Value visit(NumExp e, Env env) {
 		return new NumVal(e.v());
 	}
 
 	@Override
-	public Value visit(StrConst e, Env env) {
+	public Value visit(StrExp e, Env env) {
 		return new StringVal(e.v());
 	}
 
 	@Override
-	public Value visit(BoolConst e, Env env) {
+	public Value visit(BoolExp e, Env env) {
 		return new BoolVal(e.v());
 	}
 
@@ -66,11 +65,6 @@ public class Evaluator implements Visitor<Value> {
 	}
 
 	@Override
-	public Value visit(ErrorExp e, Env env) {
-		return new Value.DynamicError("Encountered an error expression");
-	}
-
-	@Override
 	public Value visit(MultExp e, Env env) {
 		List<Exp> operands = e.all();
 		double result = 1;
@@ -83,9 +77,13 @@ public class Evaluator implements Visitor<Value> {
 
 	@Override
 	public Value visit(Program p, Env env) {
-		for(DefineDecl d: p.decls())
-			d.accept(this, initEnv);
-		return (Value) p.e().accept(this, initEnv);
+		try {
+			for(DefineDecl d: p.decls())
+				d.accept(this, initEnv);
+			return (Value) p.e().accept(this, initEnv);
+		} catch (ClassCastException e) {
+			return new DynamicError(e.getMessage());
+		}
 	}
 
 	@Override
@@ -127,7 +125,7 @@ public class Evaluator implements Visitor<Value> {
 		String name = e.name();
 		Exp value_exp = e.value_exp();
 		Value value = (Value) value_exp.accept(this, env);
-		initEnv = new ExtendEnv(initEnv, name, value);
+		((GlobalEnv) initEnv).extend(name, value);
 		return new Value.UnitVal();		
 	}	
 
@@ -153,33 +151,13 @@ public class Evaluator implements Visitor<Value> {
 		if (formals.size()!=actuals.size())
 			return new Value.DynamicError("Argument mismatch in call " + ts.visit(e, env));
 
-		Env closure_env = operator.env();
-		Env fun_env = appendEnv(closure_env, initEnv);
+		Env fun_env = operator.env();
 		for (int index = 0; index < formals.size(); index++)
 			fun_env = new ExtendEnv(fun_env, formals.get(index), actuals.get(index));
 		
 		return (Value) operator.body().accept(this, fun_env);
 	}
-	
-	/* Helper for CallExp */
-	/***
-	 * Create an env that has bindings from fst appended to bindings from snd.
-	 * The order of bindings is bindings from fst followed by that from snd.
-	 * @param fst
-	 * @param snd
-	 * @return
-	 */
-	private Env appendEnv(Env fst, Env snd){
-		if(fst.isEmpty()) return snd;
-		if(fst instanceof ExtendEnv) {
-			ExtendEnv f = (ExtendEnv) fst;
-			return new ExtendEnv(appendEnv(f.saved_env(),snd), f.var(), f.val());
-		}
-		ExtendEnvRec f = (ExtendEnvRec) fst;
-		return new ExtendEnvRec(appendEnv(f.saved_env(),snd), f.names(), f.vals());
-	}
-	/* End: helper for CallExp */
-	
+		
 	@Override
 	public Value visit(IfExp e, Env env) { // New for funclang.
 		Object result = e.conditional().accept(this, env);
@@ -248,7 +226,7 @@ public class Evaluator implements Visitor<Value> {
 		for(int i=length-1; i>=0; i--) 
 			result = new PairVal(elems[i], result);
 		return result;
-	}
+	}	
 	
 	@Override
 	public Value visit(NullExp e, Env env) {
@@ -256,18 +234,6 @@ public class Evaluator implements Visitor<Value> {
 		return new BoolVal(val instanceof Value.Null);
 	}
 
-	public Value visit(EvalExp e, Env env) {
-		StringVal programText = (StringVal) e.code().accept(this, env);
-		Program p = _reader.parse(programText.v());
-		return (Value) p.accept(this, env);
-	}
-
-	public Value visit(ReadExp e, Env env) {
-		StringVal fileName = (StringVal) e.file().accept(this, env);
-		String text = Reader.readFile("" + System.getProperty("user.dir") + File.separator + fileName.v());
-		return new StringVal(text);
-	}
-	
 	@Override
 	public Value visit(LetrecExp e, Env env) { // New for reclang.
 		List<String> names = e.names();
@@ -280,56 +246,122 @@ public class Evaluator implements Visitor<Value> {
 		Env new_env = new ExtendEnvRec(env, names, funs);
 		return (Value) e.body().accept(this, new_env);		
 	}	
-    
-        @Override
-        public Value visit(RefExp e, Env env) { // New for reflang.
-                Exp value_exp = e.value_exp();
-                Value value = (Value) value_exp.accept(this, env);
-                return heap.ref(value);
-        }
-    
-        @Override
-        public Value visit(DerefExp e, Env env) { // New for reflang.
-                Exp loc_exp = e.loc_exp();
-                Value.RefVal loc = (Value.RefVal) loc_exp.accept(this, env);
-                return heap.deref(loc);
-        }
-    
-        @Override
-        public Value visit(AssignExp e, Env env) { // New for reflang.
-                Exp rhs = e.rhs_exp();
-                Exp lhs = e.lhs_exp();
-                //Note the order of evaluation below.
-                Value rhs_val = (Value) rhs.accept(this, env);
-                Value.RefVal loc = (Value.RefVal) lhs.accept(this, env);
-                Value assign_val = heap.setref(loc, rhs_val);
-                return assign_val;
-        }
-        
-        @Override
-        public Value visit(FreeExp e, Env env) { // New for reflang.
-                Exp value_exp = e.value_exp();
-                Value.RefVal loc = (Value.RefVal) value_exp.accept(this, env);
-                heap.free(loc);
-                return new Value.UnitVal();
-        }
-    
-        private Env initialEnv() {
-		Env initEnv = new EmptyEnv();
+
+	@Override
+	public Value visit(IsListExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.PairVal &&
+				((Value.PairVal) val).isList() ||
+				val instanceof Value.Null);
+	}
+
+	@Override
+	public Value visit(IsPairExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.PairVal);
+	}
+
+	@Override
+	public Value visit(IsUnitExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.UnitVal);
+	}
+
+	@Override
+	public Value visit(IsProcedureExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.FunVal);
+	}
+
+	@Override
+	public Value visit(IsStringExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.StringVal);
+	}
+
+	@Override
+	public Value visit(IsNumberExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.NumVal);
+	}
+
+	@Override
+	public Value visit(IsBooleanExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.BoolVal);
+	}
+
+	@Override
+	public Value visit(IsNullExp e, Env env) {
+		Value val = (Value) e.exp().accept(this, env);
+		return new BoolVal(val instanceof Value.Null);
+	}
+	
+	@Override
+	public Value visit(RefExp e, Env env) { // New for reflang.
+		Exp value_exp = e.value_exp();
+		Value value = (Value) value_exp.accept(this, env);
+		return heap.ref(value);
+	}
+
+	@Override
+	public Value visit(DerefExp e, Env env) { // New for reflang.
+		Exp loc_exp = e.loc_exp();
+		Value.RefVal loc = (Value.RefVal) loc_exp.accept(this, env);
+		return heap.deref(loc);
+	}
+
+	@Override
+	public Value visit(AssignExp e, Env env) { // New for reflang.
+		Exp rhs = e.rhs_exp();
+		Exp lhs = e.lhs_exp();
+		//Note the order of evaluation below.
+		Value rhs_val = (Value) rhs.accept(this, env);
+		Value.RefVal loc = (Value.RefVal) lhs.accept(this, env);
+		Value assign_val = heap.setref(loc, rhs_val);
+		return assign_val;
+	}
+
+	@Override
+	public Value visit(FreeExp e, Env env) { // New for reflang.
+		Exp value_exp = e.value_exp();
+		Value.RefVal loc = (Value.RefVal) value_exp.accept(this, env);
+		heap.free(loc);
+		return new Value.UnitVal();
+	}
+
+	public Value visit(EvalExp e, Env env) {
+		StringVal programText = (StringVal) e.code().accept(this, env);
+		Program p = _reader.parse(programText.v());
+		return (Value) p.accept(this, env);
+	}
+
+	public Value visit(ReadExp e, Env env) {
+		StringVal fileName = (StringVal) e.file().accept(this, env);
+		try {
+			String text = Reader.readFile("" + System.getProperty("user.dir") + File.separator + fileName.v());
+			return new StringVal(text);
+		} catch (IOException ex) {
+			return new DynamicError(ex.getMessage());
+		}
+	}
+
+	private Env initialEnv() {
+		GlobalEnv initEnv = new GlobalEnv();
 		
 		/* Procedure: (read <filename>). Following is same as (define read (lambda (file) (read file))) */
 		List<String> formals = new ArrayList<>();
 		formals.add("file");
 		Exp body = new AST.ReadExp(new VarExp("file"));
 		Value.FunVal readFun = new Value.FunVal(initEnv, formals, body);
-		initEnv = new Env.ExtendEnv(initEnv, "read", readFun);
+		initEnv.extend("read", readFun);
 
 		/* Procedure: (require <filename>). Following is same as (define require (lambda (file) (eval (read file)))) */
 		formals = new ArrayList<>();
 		formals.add("file");
 		body = new EvalExp(new AST.ReadExp(new VarExp("file")));
 		Value.FunVal requireFun = new Value.FunVal(initEnv, formals, body);
-		initEnv = new Env.ExtendEnv(initEnv, "require", requireFun);
+		initEnv.extend("require", requireFun);
 		
 		/* Add new built-in procedures here */ 
 		
