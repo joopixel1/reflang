@@ -1,257 +1,114 @@
 grammar RefLang;
+import RecLang; 
  
- // Grammar of this Programming Language
- //  - grammar rules start with lowercase
- program : 
-		(definedecl)* (exp)? //Zero or more define declarations followed by an optional expression.
-		;
-
- definedecl  :                
- 		'(' Define 
- 			Identifier
- 			exp
- 			')' 
- 		;
-
- exp : 
-		varexp 
-		| numexp 
-		| strconst
-		| boolconst
-        | addexp 
-        | subexp 
-        | multexp 
-        | divexp
-        | letexp
-        | lambdaexp 
-        | callexp 
-        | ifexp 
-        | lessexp 
-        | equalexp 
-        | greaterexp 
-        | carexp 
-        | cdrexp 
-        | consexp
-        | listexp
-        | nullexp
-        | letrecexp
-        | refexp //New for reflang
-        | derefexp //New for reflang
-        | assignexp //New for reflang
-        | freeexp //New for reflang
+exp returns [Exp ast]: 
+		va=varexp { $ast = $va.ast; }
+		| num=numexp { $ast = $num.ast; }
+		| str=strexp { $ast = $str.ast; }
+		| bl=boolexp { $ast = $bl.ast; }
+    	| add=addexp { $ast = $add.ast; }
+    	| sub=subexp { $ast = $sub.ast; }
+    	| mul=multexp { $ast = $mul.ast; }
+    	| div=divexp { $ast = $div.ast; }
+    	| let=letexp { $ast = $let.ast; }
+    	| lam=lambdaexp { $ast = $lam.ast; }
+    	| call=callexp { $ast = $call.ast; }
+    	| i=ifexp { $ast = $i.ast; }
+    	| less=lessexp { $ast = $less.ast; }
+    	| eq=equalexp { $ast = $eq.ast; }
+    	| gt=greaterexp { $ast = $gt.ast; }
+    	| car=carexp { $ast = $car.ast; }
+    	| cdr=cdrexp { $ast = $cdr.ast; }
+    	| cons=consexp { $ast = $cons.ast; }
+    	| list=listexp { $ast = $list.ast; }
+    	| nl=nullexp { $ast = $nl.ast; }
+    	| lrec=letrecexp { $ast = $lrec.ast; }
+        | np=isnumberexp { $ast = $np.ast; }
+        | bp=isbooleanexp { $ast = $bp.ast; }
+        | sp=isstringexp { $ast = $sp.ast; }
+        | pp=isprocedureexp { $ast = $pp.ast; }
+        | lp=islistexp { $ast = $lp.ast; }
+        | pap=ispairexp { $ast = $pap.ast; }
+        | up=isunitexp { $ast = $up.ast; }  
+    	| ref=refexp { $ast = $ref.ast; }  
+    	| deref=derefexp { $ast = $deref.ast; }
+    	| assign=assignexp { $ast = $assign.ast; }
+    	| free=freeexp { $ast = $free.ast; }
+    	;
+ 
+ refexp returns [RefExp ast] :
+        '(' Ref
+            e=exp
+        ')' { $ast = new RefExp($e.ast); }
         ;
- 
- varexp  : 
- 		Identifier
- 		;
- 
- numexp :
- 		Number
- 		| Number Dot Number
- 		;
 
- strconst :
- 		StrLiteral
- 		;
+ derefexp returns [DerefExp ast] :
+        '(' Deref
+            e=exp
+        ')' { $ast = new DerefExp($e.ast); }
+        ;
 
- boolconst :
- 		TrueLiteral
- 		| FalseLiteral
- 		;
+ assignexp returns [AssignExp ast] :
+        '(' Assign
+            e1=exp
+            e2=exp
+        ')' { $ast = new AssignExp($e1.ast, $e2.ast); }
+        ;
+
+ freeexp returns [FreeExp ast] :
+        '(' Free
+            e=exp
+         ')' { $ast = new FreeExp($e.ast); }
+        ;
+
+ /* Predicates for each type of value */ 
   
- addexp :
- 		'(' '+'
- 		    exp 
- 		    (exp)+ 
- 		    ')' 
- 		;
- 
- subexp :  
- 		'(' '-' 
- 		    exp 
- 		    (exp)+ 
- 		    ')' 
- 		;
+ isnumberexp returns [IsNumberExp ast] :
+        '(' 'number?'
+            e=exp
+        ')' { $ast = new IsNumberExp($e.ast); }
+        ;
 
- multexp : 
- 		'(' '*' 
- 		    exp 
- 		    (exp)+ 
- 		    ')' 
- 		;
- 
- divexp  : 
- 		'(' '/' 
- 		    exp 
- 		    (exp)+ 
- 		    ')' 
- 		;
+ isbooleanexp returns [IsBooleanExp ast] :
+        '(' 'boolean?'
+            e=exp
+        ')' { $ast = new IsBooleanExp($e.ast); }
+        ;
 
- letexp  :
- 		'(' Let 
- 			'(' ( '(' Identifier exp ')' )+  ')'
- 			exp 
- 			')' 
- 		;
+ isstringexp returns [IsStringExp ast] :
+        '(' 'string?'
+            e=exp
+        ')' { $ast = new IsStringExp($e.ast); }
+        ;
 
- lambdaexp :
- 		'(' Lambda 
- 			'(' Identifier* ')'
- 			exp 
- 			')' 
- 		;
+ islistexp returns [IsListExp ast] :
+        '(' 'list?'
+            e=exp
+        ')' { $ast = new IsListExp($e.ast); }
+        ;
 
- callexp :
- 		'(' exp 
- 			exp* 
- 			')' 
- 		;
+ ispairexp returns [IsPairExp ast] :
+        '(' 'pair?'
+            e=exp
+        ')' { $ast = new IsPairExp($e.ast); }
+        ;
 
- ifexp :
- 		'(' If 
- 		    exp 
- 			exp 
- 			exp 
- 			')' 
- 		;
+ isunitexp returns [IsUnitExp ast] :
+        '(' 'unit?'
+            e=exp
+        ')' { $ast = new IsUnitExp($e.ast); }
+        ;
 
- lessexp :
- 		'(' Less 
- 		    exp 
- 			exp 
- 			')' 
- 		;
+ isprocedureexp returns [IsProcedureExp ast] :
+        '(' 'procedure?'
+            e=exp
+        ')' { $ast = new IsProcedureExp($e.ast); }
+        ;
 
- equalexp :
- 		'(' Equal 
- 		    exp 
- 			exp 
- 			')' 
- 		;
-
- greaterexp :
- 		'(' Greater 
- 		    exp 
- 			exp 
- 			')' 
- 		;
-
- carexp :
- 		'(' Car 
- 		    exp 
- 			')' 
- 		;
-
- cdrexp :
- 		'(' Cdr 
- 		    exp 
- 			')' 
- 		;
-
- consexp :
- 		'(' Cons 
- 		    exp 
- 			exp 
- 			')' 
- 		;
-
- listexp :
- 		'(' List 
- 		    exp* 
- 			')' 
- 		;
-
- nullexp :
- 		'(' Null 
- 		    exp 
- 			')' 
- 		;
-
- letrecexp  :
- 		'(' Letrec 
- 			'(' ( '(' Identifier exp ')' )+  ')'
- 			exp 
- 			')' 
- 		;
-
-// ******************* New Expressions for RefLang **********************
- refexp  :
-                '(' Ref
-                    exp
-                    ')'
-                ;
-
- derefexp  :
-                '(' Deref
-                    exp
-                    ')'
-                ;
-
- assignexp  :
-                '(' Assign
-                    exp
-                    exp
-                    ')'
-                ;
-
- freeexp  :
-                '(' Free
-                    exp
-                    ')'
-                ;
-
-// Keywords
-
- Let : 'let' ;
- Define : 'define' ;
- Lambda : 'lambda' ;
- If : 'if' ; 
- Car : 'car' ; 
- Cdr : 'cdr' ; 
- Cons : 'cons' ; 
- List : 'list' ; 
- Null : 'null?' ; 
- Letrec : 'letrec' ;
- Less : '<' ;
- Equal : '=' ;
- Greater : '>' ;
- TrueLiteral : '#t' ;
- FalseLiteral : '#f' ;
- Dot : '.' ;
- Ref : 'ref' ;
- Deref : 'deref' ;
- Assign : 'set!' ;
- Free : 'free' ;
- 
- // Lexical Specification of this Programming Language
- //  - lexical specification rules start with uppercase
-
- Identifier :   Letter LetterOrDigit*;
- 	
- Number : DIGIT+ ;
- 
-// Identifier :   Letter LetterOrDigit*;
-
- Letter :   [a-zA-Z$_]
-	|   ~[\u0000-\u00FF\uD800-\uDBFF] 
-		{Character.isJavaIdentifierStart(_input.LA(-1))}?
-	|   [\uD800-\uDBFF] [\uDC00-\uDFFF] 
-		{Character.isJavaIdentifierStart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}? ;
-
- LetterOrDigit: [a-zA-Z0-9$_?]
-	|   ~[\u0000-\u00FF\uD800-\uDBFF] 
-		{Character.isJavaIdentifierPart(_input.LA(-1))}?
-	|    [\uD800-\uDBFF] [\uDC00-\uDFFF] 
-		{Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?;
-
- fragment DIGIT: ('0'..'9');
- fragment DIGIT_NOT_ZERO: ('1'..'9');
-
- fragment ESCQUOTE : '\\"';
- StrLiteral :   '"' ( ESCQUOTE | ~('\n'|'\r') )*? '"';
-
- AT : '@';
- ELLIPSIS : '...';
- WS  :  [ \t\r\n\u000C]+ -> skip;
- Comment :   '/*' .*? '*/' -> skip;
- Line_Comment :   '//' ~[\r\n]* -> skip;
+ isnullexp returns [IsNullExp ast] :
+        '(' 'null?'
+            e=exp
+        ')' { $ast = new IsNullExp($e.ast); }
+        ;
+        
+        
