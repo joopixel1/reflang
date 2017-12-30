@@ -2,7 +2,7 @@ package reflang;
 
 import java.util.List;
 
-import reflang.AST.Exp;
+import reflang.AST.*;
 
 public class Printer {
 	public void print(Value v) {
@@ -22,19 +22,19 @@ public class Printer {
 			return result + ")";
 		}
 		
-		public String visit(AST.Unit e, Env env) {
+		public String visit(AST.UnitExp e, Env env) {
 			return "unit";
 		}
 
-		public String visit(AST.Const e, Env env) {
+		public String visit(AST.NumExp e, Env env) {
 			return "" + e.v();
 		}
 		
-		public String visit(AST.StrConst e, Env env) {
+		public String visit(AST.StrExp e, Env env) {
 			return e.v();
 		}
 		
-		public String visit(AST.BoolConst e, Env env) {
+		public String visit(AST.BoolExp e, Env env) {
 			if(e.v()) return "#t";
 			return "#f";
 		}
@@ -44,10 +44,6 @@ public class Printer {
 			for(AST.Exp exp : e.all()) 
 				result += exp.accept(this, env) + " ";
 			return result + ")";
-		}
-		
-		public String visit(AST.ErrorExp e, Env env) {
-			return e.toString();
 		}
 		
 		public String visit(AST.ReadExp e, Env env) {
@@ -195,29 +191,85 @@ public class Printer {
 			return result + ")";
 		}
         
-                public String visit(AST.RefExp e, Env env) {
-                        String result = "(ref ";
-                        result += e.value_exp().accept(this, env);
-                        return result + ")";
-                }
-        
-                public String visit(AST.DerefExp e, Env env) {
-                        String result = "(deref ";
-                        result += e.loc_exp().accept(this, env);
-                        return result + ")";
-                }
-        
-                public String visit(AST.AssignExp e, Env env) {
-                        String result = "(set! ";
-                        result += e.lhs_exp().accept(this, env) + " ";
-                        result += e.rhs_exp().accept(this, env);
-                        return result + ")";
-                }
-                
-                public String visit(AST.FreeExp e, Env env) {
-                    String result = "(free ";
-                    result += e.value_exp().accept(this, env);
-                    return result + ")";
-                }
+        @Override
+        public String visit(IsListExp e, Env env) {
+                String result = "(list? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsPairExp e, Env env) {
+                String result = "(pair? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsUnitExp e, Env env) {
+                String result = "(unit? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsProcedureExp e, Env env) {
+                String result = "(procedure? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsStringExp e, Env env) {
+                String result = "(string? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsNumberExp e, Env env) {
+                String result = "(number? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsBooleanExp e, Env env) {
+                String result = "(boolean? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        @Override
+        public String visit(IsNullExp e, Env env) {
+                String result = "(null? ";
+                result += e.exp().accept(this, env);
+                return result + ")";
+        }
+
+        public String visit(AST.RefExp e, Env env) {
+			String result = "(ref ";
+			result += e.value_exp().accept(this, env);
+			return result + ")";
+		}
+
+		public String visit(AST.DerefExp e, Env env) {
+			String result = "(deref ";
+			result += e.loc_exp().accept(this, env);
+			return result + ")";
+		}
+
+		public String visit(AST.AssignExp e, Env env) {
+			String result = "(set! ";
+			result += e.lhs_exp().accept(this, env) + " ";
+			result += e.rhs_exp().accept(this, env);
+			return result + ")";
+		}
+
+		public String visit(AST.FreeExp e, Env env) {
+			String result = "(free ";
+			result += e.value_exp().accept(this, env);
+			return result + ")";
+		}
 	}
 }
