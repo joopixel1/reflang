@@ -49,7 +49,33 @@ exp returns [Exp ast]:
     	| free=freeexp { $ast = $free.ast; }
     	;
 
-  
+ // New Expressions for RefLang
+
+  refexp returns [RefExp ast] :
+        '(' Ref
+            e=exp
+        ')' { $ast = new RefExp($e.ast); }
+        ;
+
+ derefexp returns [DerefExp ast] :
+        '(' Deref
+            e=exp
+        ')' { $ast = new DerefExp($e.ast); }
+        ;
+
+ assignexp returns [AssignExp ast] :
+        '(' Assign
+            e1=exp
+            e2=exp
+        ')' { $ast = new AssignExp($e1.ast, $e2.ast); }
+        ;
+
+ freeexp returns [FreeExp ast] :
+        '(' Free
+            e=exp
+         ')' { $ast = new FreeExp($e.ast); }
+        ;
+         
  letrecexp returns [LetrecExp ast] 
         locals [ArrayList<String> ids = new ArrayList<String>(), ArrayList<Exp> funs = new ArrayList<Exp>(); ] :
  		'(' Letrec 
@@ -104,6 +130,56 @@ exp returns [Exp ast]:
  			e2=exp 
  		')' { $ast = new GreaterExp($e1.ast,$e2.ast); }
  		;
+
+ // Predicates for each type of value
+  
+ isnumberexp returns [IsNumberExp ast] :
+        '(' 'number?'
+            e=exp
+        ')' { $ast = new IsNumberExp($e.ast); }
+        ;
+
+ isbooleanexp returns [IsBooleanExp ast] :
+        '(' 'boolean?'
+            e=exp
+        ')' { $ast = new IsBooleanExp($e.ast); }
+        ;
+
+ isstringexp returns [IsStringExp ast] :
+        '(' 'string?'
+            e=exp
+        ')' { $ast = new IsStringExp($e.ast); }
+        ;
+
+ islistexp returns [IsListExp ast] :
+        '(' 'list?'
+            e=exp
+        ')' { $ast = new IsListExp($e.ast); }
+        ;
+
+ ispairexp returns [IsPairExp ast] :
+        '(' 'pair?'
+            e=exp
+        ')' { $ast = new IsPairExp($e.ast); }
+        ;
+
+ isunitexp returns [IsUnitExp ast] :
+        '(' 'unit?'
+            e=exp
+        ')' { $ast = new IsUnitExp($e.ast); }
+        ;
+
+ isprocedureexp returns [IsProcedureExp ast] :
+        '(' 'procedure?'
+            e=exp
+        ')' { $ast = new IsProcedureExp($e.ast); }
+        ;
+
+ isnullexp returns [IsNullExp ast] :
+        '(' 'null?'
+            e=exp
+        ')' { $ast = new IsNullExp($e.ast); }
+        ;
 
 // Expressions related to list
 
@@ -254,79 +330,3 @@ exp returns [Exp ast]:
  fragment ESCQUOTE : '\\"';
  StrLiteral :   '"' ( ESCQUOTE | ~('\n'|'\r') )*? '"';
  	  
- refexp returns [RefExp ast] :
-        '(' Ref
-            e=exp
-        ')' { $ast = new RefExp($e.ast); }
-        ;
-
- derefexp returns [DerefExp ast] :
-        '(' Deref
-            e=exp
-        ')' { $ast = new DerefExp($e.ast); }
-        ;
-
- assignexp returns [AssignExp ast] :
-        '(' Assign
-            e1=exp
-            e2=exp
-        ')' { $ast = new AssignExp($e1.ast, $e2.ast); }
-        ;
-
- freeexp returns [FreeExp ast] :
-        '(' Free
-            e=exp
-         ')' { $ast = new FreeExp($e.ast); }
-        ;
-
- /* Predicates for each type of value */ 
-  
- isnumberexp returns [IsNumberExp ast] :
-        '(' 'number?'
-            e=exp
-        ')' { $ast = new IsNumberExp($e.ast); }
-        ;
-
- isbooleanexp returns [IsBooleanExp ast] :
-        '(' 'boolean?'
-            e=exp
-        ')' { $ast = new IsBooleanExp($e.ast); }
-        ;
-
- isstringexp returns [IsStringExp ast] :
-        '(' 'string?'
-            e=exp
-        ')' { $ast = new IsStringExp($e.ast); }
-        ;
-
- islistexp returns [IsListExp ast] :
-        '(' 'list?'
-            e=exp
-        ')' { $ast = new IsListExp($e.ast); }
-        ;
-
- ispairexp returns [IsPairExp ast] :
-        '(' 'pair?'
-            e=exp
-        ')' { $ast = new IsPairExp($e.ast); }
-        ;
-
- isunitexp returns [IsUnitExp ast] :
-        '(' 'unit?'
-            e=exp
-        ')' { $ast = new IsUnitExp($e.ast); }
-        ;
-
- isprocedureexp returns [IsProcedureExp ast] :
-        '(' 'procedure?'
-            e=exp
-        ')' { $ast = new IsProcedureExp($e.ast); }
-        ;
-
- isnullexp returns [IsNullExp ast] :
-        '(' 'null?'
-            e=exp
-        ')' { $ast = new IsNullExp($e.ast); }
-        ;
-        
-        
