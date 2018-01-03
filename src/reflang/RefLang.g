@@ -302,7 +302,11 @@ exp returns [Exp ast]:
  Greater : '>' ;
  TrueLiteral : '#t' ;
  FalseLiteral : '#f' ;
-
+ Ref : 'ref' ;
+ Deref : 'deref' ;
+ Assign : 'set!' ;
+ Free : 'free' ;
+ 
  Number : DIGIT+ ;
 
  Identifier :   Letter LetterOrDigit*;
