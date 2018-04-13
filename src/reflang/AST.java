@@ -842,14 +842,14 @@ public interface AST {
 		public T visit(AST.LessExp e, Env env); 
 		public T visit(AST.EqualExp e, Env env); 
 		public T visit(AST.GreaterExp e, Env env); 
-        public T visit(AST.IsNullExp e, Env env); 
-        public T visit(AST.IsProcedureExp e, Env env); 
-        public T visit(AST.IsListExp e, Env env); 
-        public T visit(AST.IsPairExp e, Env env); 
-        public T visit(AST.IsUnitExp e, Env env); 
-        public T visit(AST.IsNumberExp e, Env env); 
-        public T visit(AST.IsStringExp e, Env env); 
-        public T visit(AST.IsBooleanExp e, Env env); 
+                public T visit(AST.IsNullExp e, Env env); 
+                public T visit(AST.IsProcedureExp e, Env env); 
+                public T visit(AST.IsListExp e, Env env); 
+                public T visit(AST.IsPairExp e, Env env); 
+                public T visit(AST.IsUnitExp e, Env env); 
+                public T visit(AST.IsNumberExp e, Env env); 
+                public T visit(AST.IsStringExp e, Env env); 
+                public T visit(AST.IsBooleanExp e, Env env); 
 		public T visit(AST.RefExp e, Env env); // New for the Reflang
 		public T visit(AST.DerefExp e, Env env); // New for the Reflang
 		public T visit(AST.AssignExp e, Env env); // New for the Reflang
