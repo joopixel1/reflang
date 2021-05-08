@@ -33,7 +33,7 @@ public interface Heap {
 		public Value deref (Value.RefVal loc) {
 			try {
 				if(_rep[loc.loc()] == null) 
-					return new Value.DynamicError("Null pointer error at access " + loc.tostring());
+					return new Value.DynamicError("Null pointer at " + loc.tostring());
 				return _rep[loc.loc()];
 			} catch (ArrayIndexOutOfBoundsException e) {
 				return new Value.DynamicError("Segmentation fault at access " + loc.tostring());
@@ -43,7 +43,7 @@ public interface Heap {
 		public Value setref (Value.RefVal loc, Value value) {
 			try {
 				if(_rep[loc.loc()] == null) 
-					return new Value.DynamicError("Null pointer error at access " + loc.tostring());
+					return new Value.DynamicError("Null pointer at " + loc.tostring());
 				return _rep[loc.loc()] = value;
 			} catch (ArrayIndexOutOfBoundsException e) {
 				return new Value.DynamicError("Segmentation fault at access " + loc.tostring());
