@@ -32,17 +32,21 @@ public interface Heap {
 
 		public Value deref (Value.RefVal loc) {
 			try {
+				if(_rep[loc.loc()] == null) 
+					return new Value.DynamicError("Null pointer error at access " + loc.tostring());
 				return _rep[loc.loc()];
 			} catch (ArrayIndexOutOfBoundsException e) {
-				return new Value.DynamicError("Segmentation fault at access " + loc);
+				return new Value.DynamicError("Segmentation fault at access " + loc.tostring());
 			}
 		}
 
 		public Value setref (Value.RefVal loc, Value value) {
 			try {
+				if(_rep[loc.loc()] == null) 
+					return new Value.DynamicError("Null pointer error at access " + loc.tostring());
 				return _rep[loc.loc()] = value;
 			} catch (ArrayIndexOutOfBoundsException e) {
-				return new Value.DynamicError("Segmentation fault at access " + loc);
+				return new Value.DynamicError("Segmentation fault at access " + loc.tostring());
 			}
 		}
 
@@ -51,7 +55,7 @@ public interface Heap {
 				_rep[loc.loc()] = null;
 				return loc;
 			} catch (ArrayIndexOutOfBoundsException e) {
-				return new Value.DynamicError("Segmentation fault at access " + loc);
+				return new Value.DynamicError("Segmentation fault at access " + loc.tostring());
 			}
 		}
 
