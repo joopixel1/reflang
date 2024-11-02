@@ -63,6 +63,8 @@ public interface AST {
         T visit(AST.DerefExp e, Env env);  // new for reflang
 
         T visit(AST.FreeExp e, Env env);   // new for reflang
+
+        T visit(AST.RefEqExp e, Env env);   // new for reflang
     }
 
     abstract class ASTNode implements AST {
@@ -580,5 +582,33 @@ public interface AST {
             return _value_exp;
         }
 
+    }
+
+    /**
+     * A free expression has the syntax
+     * <p>
+     * (free expression)
+     *
+     * @author hridesh
+     */
+    class RefEqExp extends Exp {
+        private final Exp exp1, exp2;
+
+        public RefEqExp(Exp e1, Exp e2) {
+            exp1 = e1;
+            exp2 = e2;
+        }
+
+        public <T> T accept(Visitor<T> visitor, Env env) {
+            return visitor.visit(this, env);
+        }
+
+        public Exp exp1() {
+            return exp1;
+        }        
+        
+        public Exp exp2() {
+            return exp2;
+        }
     }
 }

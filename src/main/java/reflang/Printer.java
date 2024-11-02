@@ -187,5 +187,10 @@ public class Printer {
         public String visit(AST.FreeExp e, Env env) {
             return "(free %s)".formatted(e.value_exp().accept(this, env));
         }
+
+        @Override
+        public String visit(AST.RefEqExp e, Env env) {
+            return "(== %s %s)".formatted(e.exp1().accept(this, env), e.exp2().accept(this, env));
+        }
     }
 }

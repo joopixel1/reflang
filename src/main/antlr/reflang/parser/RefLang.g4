@@ -26,6 +26,7 @@ exp returns [Exp ast]:
     	| deref=derefexp   { $ast = $deref.ast; }     // new for RefLang
     	| assign=assignexp { $ast = $assign.ast; }    // new for RefLang
     	| free=freeexp     { $ast = $free.ast; }      // new for RefLang
+    	| refeq=refeqexp   { $ast = $refeq.ast; }      // new for RefLang
     	;
 
  // New Expressions for RefLang
@@ -44,6 +45,10 @@ assignexp returns [AssignExp ast] :
 freeexp returns [FreeExp ast] :
     '(' Free e=exp ')' { $ast = new FreeExp($e.ast); }
     ;
+
+refeqexp returns [RefEqExp ast] :
+	'(' RefEq e1=exp e2=exp ')' { $ast = new RefEqExp($e1.ast, $e2.ast); }
+	;
          
  // Lexical Specification of this Programming Language
  //  - lexical specification rules start with uppercase
@@ -51,3 +56,4 @@ freeexp returns [FreeExp ast] :
  Deref  : 'deref' ;
  Assign : 'set!' ;
  Free   : 'free' ;
+ RefEq	: '==' ;

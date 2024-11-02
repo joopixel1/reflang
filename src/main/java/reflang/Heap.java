@@ -1,5 +1,7 @@
 package reflang;
 
+import java.util.TreeSet;
+
 /**
  * Representation of a heap, which maps references to values.
  *
@@ -19,12 +21,13 @@ public interface Heap {
         static final int HEAP_SIZE = 65_536;
 
         Value[] _rep = new Value[HEAP_SIZE];
-        int index = 0;
+        TreeSet<Integer> ts = new TreeSet();
 
         public Value ref(Value value) {
-            if (index >= HEAP_SIZE) return new Value.DynamicError("Out of memory error");
-            Value.RefVal new_loc = new Value.RefVal(index);
-            _rep[index++] = value;
+            if (ts.isEmpty()) return new Value.DynamicError("Out of memory error");
+            Value.RefVal new_loc = new Value.RefVal(ts.first());
+            _rep[ts.first()] = value;
+            ts.removeFirst();
             return new_loc;
         }
 
@@ -48,6 +51,7 @@ public interface Heap {
 
         public Value free(Value.RefVal loc) {
             try {
+                ts.add(loc.loc());
                 _rep[loc.loc()] = null;
                 return loc;
             } catch (ArrayIndexOutOfBoundsException e) {
@@ -56,6 +60,7 @@ public interface Heap {
         }
 
         public Heap16Bit() {
+            for(int i=0; i<HEAP_SIZE; i++) ts.add(i);
         }
     }
 

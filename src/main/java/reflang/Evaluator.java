@@ -9,6 +9,7 @@ import java.util.List;
 import static reflang.AST.*;
 import static reflang.Value.NumVal;
 import static reflang.Value.UnitVal;
+import static reflang.Value.BoolVal;
 
 public class Evaluator implements Visitor<Value> {
 
@@ -260,5 +261,12 @@ public class Evaluator implements Visitor<Value> {
         Value.RefVal loc = (Value.RefVal) value_exp.accept(this, env);
         heap.free(loc);
         return new Value.UnitVal();
+    }
+
+    @Override
+    public Value visit(RefEqExp e, Env env) {
+        Value.RefVal val1 = (Value.RefVal) e.exp1().accept(this, env);
+        Value.RefVal val2 = (Value.RefVal) e.exp2().accept(this, env);
+        return new BoolVal(val1.loc() == val2.loc());
     }
 }
